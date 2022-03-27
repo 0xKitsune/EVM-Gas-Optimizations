@@ -31,15 +31,53 @@ for (uint i = 0; i < 10; ++i) {
 //
 ```
 
+## Use `calldata` instead of `memory` where possible
 
-## `Selfbalance()` instead of `balance(this)`
+```js
+//
+```
+
+## Pack calldata where possible
+
+```js
+//
+```
+
+## Pack structs
+
+
+```js
+//
+```
+
+## Mark storage variables as `immutable` if they never change after initialization
+
 
 ```js
 //
 ```
 
 
-## `Balance(address)` instead of `address.balance()`
+## Use constants for values that never change
+
+```js
+//
+```
+
+## `int` is more expensive than `uint`
+
+```js
+//
+```
+
+## Use `selfbalance()` instead of `balance(this)`
+
+```js
+//
+```
+
+
+## Use `balance(address)` instead of `address.balance()`
 
 ```js
 //
