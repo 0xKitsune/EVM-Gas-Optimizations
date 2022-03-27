@@ -126,4 +126,14 @@ assembly{
 ```
 
 
+## Right shift instead of dividing by two
 
+```js
+//
+```
+
+## Left shift instead of multiplying by two
+
+```js
+//
+```
