@@ -64,11 +64,21 @@ for (uint i = 0; i < 10; ++i) {
 //
 ```
 
-## `int` is more expensive than `uint`
+## `int` can be more expensive than `uint`
+
+Negative ints are encoded with leading 0xf bytes. Nonzero bytes in calldata use 4x more gas than zero bytes.
 
 ```js
-//
+
+ »  abi.encode(int(-8))
+0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8
+
+
+ »  abi.encode(uint(8))
+0x0000000000000000000000000000000000000000000000000000000000000008
+
 ```
+
 
 ## Use `selfbalance()` instead of `balance(this)`
 
