@@ -137,3 +137,22 @@ assembly{
 ```js
 //
 ```
+
+## Use multiple `require()` statments insted of `require(expression && expression && ...)`
+
+```js
+
+//unoptimized
+function singleRequire(uint256 num) public pure {
+    require(num > 1 && num < 10 && num == 3);
+}
+
+
+//optimized
+function multipleRequire(uint256 num) public pure {
+        require(num > 1);
+        require(num < 10);
+        require(num == 3);
+}
+
+
