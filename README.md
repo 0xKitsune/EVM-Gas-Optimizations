@@ -80,17 +80,31 @@ Negative ints are encoded with leading 0xf bytes. Nonzero bytes in calldata use 
 ```
 
 
-## Use `selfbalance()` instead of `balance(this)`
+## Use `selfbalance()` instead of `address(this).balance` when getting your contract's balance of ETH.
 
 ```js
-//
+//unoptimized
+uint256 thisContractBalance = address(this).balance;
+
+//optimized
+uint256 thisContractBalance;
+assembly{
+    thisContractBalance := selfbalance()
+}
 ```
 
 
-## Use `balance(address)` instead of `address.balance()`
+## Use `balance(address)` instead of `address.balance()` when getting an external contract's balance of ETH.
 
 ```js
-//
+//unoptimized
+uint256 contractBalance = someAddress.balance();
+
+//optimized
+uint256 contractBalance;
+assembly{
+    contractBalance := balance(someAddress)
+}
 ```
 
 
