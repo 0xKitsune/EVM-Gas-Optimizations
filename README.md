@@ -28,7 +28,20 @@ for (uint i = 0; i < 10; ++i) {
 ## Short circuiting
 
 ```js
-//
+
+// f(x) is low cost
+// g(y) is expensive
+
+//unoptimized
+if (g(y) || f(x)){
+    //code here
+}
+
+
+//optimized
+if (f(x) || g(y)){
+    //code here
+}
 ```
 
 ## Use `calldata` instead of `memory` where possible
