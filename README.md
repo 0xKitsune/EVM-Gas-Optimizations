@@ -165,6 +165,81 @@ assembly{
 //
 ```
 
+## Use assembly to check for address(0)
+```js
+    //unoptimized
+    function unoptimizedGasTest(address owner) public view {
+        require(owner != address(0), "zero address)");
+    }
+
+    //optimized
+    function optimizedGasTest(address owner) public view {
+        assembly {
+            if iszero(owner) {
+                mstore(0x00, "zero address")
+                revert(0x00, 0x20)
+            }
+        }
+    }
+
+```
+
+## Use assembly to check if msg.sender == owner (or any stored address)
+
+
+```js
+
+contract Unoptimized {
+    address owner = 0xb4c79daB8f259C7Aee6E5b2Aa729821864227e84;
+
+    function unoptimizedGasTest() public {
+        require(msg.sender == owner, "!auth");
+    }
+}
+
+contract Optimized {
+    address owner = 0xb4c79daB8f259C7Aee6E5b2Aa729821864227e84;
+
+    function optimizedGasTest() public {
+        assembly {
+            if iszero(eq(sload(owner.slot), caller())) {
+                mstore(0x00, "!auth")
+                revert(0x00, 0x20)
+            }
+
+        }
+    }
+}
+
+```
+
+
+## Use assembly to update owner (or any stored address/value)
+
+
+```js
+
+
+contract Unoptimized {
+    address owner = 0xb4c79daB8f259C7Aee6E5b2Aa729821864227e84;
+
+    function unoptimizedGasTest(address newOwner) public {
+        owner = newOwner;
+    }
+}
+
+contract Optimized {
+    address owner = 0xb4c79daB8f259C7Aee6E5b2Aa729821864227e84;
+
+    function optimizedGasTest(address newOwner) public {
+        assembly {
+            sstore(owner.slot, newOwner)
+        }
+    }
+}
+
+```
+
 ## Use multiple `require()` statments insted of `require(expression && expression && ...)`
 
 ```js
