@@ -47,34 +47,94 @@ if (f(x) || g(y)){
 ## Use `calldata` instead of `memory` where possible
 
 ```js
-//
+contract Unoptimized {
+    function unoptimizedGasTest(bytes memory data) public {}
+}
+
+contract Optimized {
+    function optimizedGasTest(bytes calldata data) public {}
+}
+
 ```
 
 ## Pack calldata where possible
 
 ```js
-//
+
+contract Unoptimized {
+    function unoptimizedGasTest(address exampleAddress, uint256 exampleUint256) public{
+        //do something
+    }
+}
+
+contract Optimized {
+    function optimizedGasTest(bytes calldata data) public {
+        (address exampleAddress, uint256 exampleUint256) = abi.decode(data,(address, uint256));
+
+        //do something
+    }
+}
+
 ```
 
 ## Pack structs
 
-
 ```js
-//
+struct UnoptimizedStruct{
+    uint128 a;
+    uint256 b;
+    uint128 c;   
+}
+
+struct OptimizedStruct{
+    uint128 a;
+    uint128 b;
+    uint256 c;   
+}
+
 ```
 
 ## Mark storage variables as `immutable` if they never change after initialization
 
 
 ```js
-//
+
+contract Unoptimized {
+    uint256 fee;
+    
+    constructor(){
+        fee = 10;
+    }
+}
+
+
+contract Optimized {
+    uint256 immutable fee;
+    
+       constructor(){
+        fee = 10;
+    }
+}
 ```
 
 
 ## Use constants for values that never change
 
 ```js
-//
+contract Unoptimized {
+    uint256 fee;
+    
+    constructor(){
+        fee = 10;
+    }
+}
+
+
+contract Optimized {
+    uint256 constant FEE = 10;
+}
+
+
 ```
 
 ## `int` can be more expensive than `uint`
@@ -156,13 +216,39 @@ assembly{
 ## Right shift instead of dividing by two
 
 ```js
-//
+
+contract Unoptimized {
+    function unoptimizedGasTest() public {
+        uint256 val = 10;
+        uint256 valMulTwo = val * 2;
+    }
+}
+
+contract Optimized {
+    function optimizedGasTest() public {
+        uint256 val = 10;
+        uint256 valMulTwo = val >> 2;
+    }
+}
 ```
 
 ## Left shift instead of multiplying by two
 
 ```js
-//
+
+contract Unoptimized {
+    function unoptimizedGasTest() public {
+        uint256 val = 10;
+        uint256 valMulTwo = val/2;
+    }
+}
+
+contract Optimized {
+    function optimizedGasTest() public {
+        uint256 val = 10;
+        uint256 valMulTwo = val << 2;
+    }
+}
 ```
 
 ## Use assembly to check for address(0)
