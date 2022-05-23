@@ -287,6 +287,8 @@ contract GasReport {
 
 ## Pack calldata where possible
 
+Every byte of calldata costs gas with non-zero calldata costing per byte and zero value calldata costing per byte. By packing calldata, you can reduce the zero value calldata, thus making it more efficient when calling a function. You will need to decode the calldata correctly inside of the function if you pack calldata. 
+
 ```js
 
 contract Unoptimized {
@@ -306,19 +308,61 @@ contract Optimized {
 ```
 
 ## Pack structs
+When creating structs, make sure that the variables are listed in ascending order by data type. The compiler will pack the variables that can fit into one 32 byte slot. If the variables are not listed in ascending order, the compiler may not pack the data into one slot, causing additional `sload` and `sstore` instructions when reading/storing the struct into the contract's storage.
 
 ```js
-struct UnoptimizedStruct{
-    uint128 a;
-    uint256 b;
-    uint128 c;   
+
+contract GasReport {
+    struct UnoptimizedStruct {
+        uint128 a;
+        uint256 b;
+        uint128 c;
+    }
+
+    struct OptimizedStruct {
+        uint128 a;
+        uint128 b;
+        uint256 c;
+    }
+
+    mapping(uint256 => UnoptimizedStruct) idToUnoptimizedStruct;
+    mapping(uint256 => OptimizedStruct) idToOptimizedStruct;
+
+    function storeUnoptimizedStruct() public {
+        idToUnoptimizedStruct[0] = UnoptimizedStruct(
+            23409234,
+            23489234982349,
+            234923093
+        );
+    }
+
+    function storeOptimizedStruct() public {
+        idToOptimizedStruct[0] = OptimizedStruct(
+            23409234,
+            23489234982349,
+            234923093
+        );
+    }
 }
 
-struct OptimizedStruct{
-    uint128 a;
-    uint128 b;
-    uint256 c;   
-}
+
+```
+
+### Gas Report
+```js
+╭────────────────────────┬─────────────────┬───────┬────────┬───────┬─────────╮
+│ GasReport contract     ┆                 ┆       ┆        ┆       ┆         │
+╞════════════════════════╪═════════════════╪═══════╪════════╪═══════╪═════════╡
+│ Deployment Cost        ┆ Deployment Size ┆       ┆        ┆       ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 94941                  ┆ 506             ┆       ┆        ┆       ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name          ┆ min             ┆ avg   ┆ median ┆ max   ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ storeOptimizedStruct   ┆ 44508           ┆ 44508 ┆ 44508  ┆ 44508 ┆ 1       │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ storeUnoptimizedStruct ┆ 66623           ┆ 66623 ┆ 66623  ┆ 66623 ┆ 1       │
+╰────────────────────────┴─────────────────┴───────┴────────┴───────┴─────────╯
 
 ```
 
