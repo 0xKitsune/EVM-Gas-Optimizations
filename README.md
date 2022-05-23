@@ -6,19 +6,22 @@ This repo was made to document of all of the gas optimizations that I have come 
 
 ## `unchecked{++i}` instead of `i++` (or use assembly when applicable)
 
-Use `++i` instead of `i++`. This is especially useful in for loops but this optimization can be used anywhere in your code. You can also use `unchecked{++i;}` for even more gas savings but this will not check to see if `i` overflows. For extra safety if you are worried about this, you can add a require statement after the loop checking if `i` is equal to the final incremented value.
+Use `++i` instead of `i++`. This is especially useful in for loops but this optimization can be used anywhere in your code. You can also use `unchecked{++i;}` for even more gas savings but this will not check to see if `i` overflows. For extra safety if you are worried about this, you can add a require statement after the loop checking if `i` is equal to the final incremented value. For best gas savings, use inline assembly, however this limits the functionality you can achieve. For example you cant use Solidity syntax to internally call your own contract within an assembly block and external calls must be done with the `call()` or `delegatecall()` instruction. However when applicable, inline assembly will save much more gas.
 
 ### Optimization
 ```js
 
 contract GasReport {
+       
+    //loop with i++
     function iPlusPlus() public pure {
         uint256 j = 0;
         for (uint256 i; i < 10; i++) {
             j++;
         }
     }
-
+    
+    //loop with ++i
     function plusPlusI() public pure {
         uint256 j = 0;
         for (uint256 i; i < 10; ++i) {
@@ -26,6 +29,7 @@ contract GasReport {
         }
     }
 
+    //loop with unchecked{++i}
     function uncheckedPlusPlusI() public pure {
         uint256 j = 0;
         for (uint256 i; i < 10; ) {
@@ -37,6 +41,7 @@ contract GasReport {
         }
     }
 
+    //loop with unchecked{++i} with additional overflow check
     function safeUncheckedPlusPlusI() public pure {
         uint256 j = 0;
         uint256 i = 0;
@@ -57,7 +62,7 @@ contract GasReport {
         }
     }
 
-
+    //loop with inline assembly
     function inlineAssemblyLoop() public pure {
         assembly {
             let j := 0
@@ -96,6 +101,23 @@ contract GasReport {
 ```
 
 
+## Use assembly for math (add, sub, mul, div)
+
+short description
+
+### Optimization
+```js
+
+ 
+
+```
+
+### Gas Report
+```js
+
+```
+
+
 ## Short circuiting
 
 ```js
@@ -114,6 +136,8 @@ if (f(x) || g(y)){
     //code here
 }
 ```
+
+
 
 ## Use `calldata` instead of `memory` where possible
 
