@@ -4,7 +4,7 @@ This repo was made to document of all of the gas optimizations that I have come 
 
 <br>
 
-## `++i` instead of `i++`
+## `unchecked{++i}` instead of `i++`
 
 Use `unchecked{++i}` instead of `i++`. This is especially useful in for loops but this optimization can be used anywhere in your code. 
 
