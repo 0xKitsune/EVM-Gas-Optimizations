@@ -29,10 +29,10 @@ for (uint i = 0; i < 10) {
 }
 
 //even more optimized
- assembly {
-   for {let i := 0} lt(i, _toPids.length) {i := add(i, 0x01)} {
+assembly {
+  for {let i := 0} lt(i, _toPids.length) {i := add(i, 0x01)} {
     //code goes here
-    }
+  }
 }
 
 ```
