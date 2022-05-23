@@ -109,10 +109,13 @@ Use assembly for math instead of Solidity. You can check for overflow/underflow 
 ```js
 
 contract GasReport {
+
+    //addition in Solidity
     function addTest(uint256 a, uint256 b) public pure {
         uint256 c = a + b;
     }
 
+    //addition in assembly
     function addAssemblyTest(uint256 a, uint256 b) public pure {
         assembly {
             let c := add(a, b)
@@ -124,10 +127,12 @@ contract GasReport {
         }
     }
 
+    //subtraction in Solidity
     function subTest(uint256 a, uint256 b) public pure {
         uint256 c = a - b;
     }
 
+    //subtraction in assembly
     function subAssemblyTest(uint256 a, uint256 b) public pure {
         assembly {
             let c := sub(a, b)
@@ -139,10 +144,12 @@ contract GasReport {
         }
     }
 
+    //multiplication in Solidity
     function mulTest(uint256 a, uint256 b) public pure {
         uint256 c = a * b;
     }
 
+    //multiplication in assembly
     function mulAssemblyTest(uint256 a, uint256 b) public pure {
         assembly {
             let c := mul(a, b)
@@ -154,10 +161,12 @@ contract GasReport {
         }
     }
 
+    //division in Solidity
     function divTest(uint256 a, uint256 b) public pure {
         uint256 c = a * b;
     }
 
+    //division in assembly
     function divAssemblyTest(uint256 a, uint256 b) public pure {
         assembly {
             let c := div(a, b)
