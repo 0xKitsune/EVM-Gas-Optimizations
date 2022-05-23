@@ -103,17 +103,104 @@ contract GasReport {
 
 ## Use assembly for math (add, sub, mul, div)
 
-short description
+Use assembly for math instead of Solidity. You can check for overflow/underflow in assembly as seen below.
 
 ### Optimization
 ```js
 
+contract GasReport {
+    function addTest(uint256 a, uint256 b) public pure {
+        uint256 c = a + b;
+    }
+
+    function addAssemblyTest(uint256 a, uint256 b) public pure {
+        assembly {
+            let c := add(a, b)
+
+            if lt(c, a) {
+                mstore(0x00, "overflow")
+                revert(0x00, 0x20)
+            }
+        }
+    }
+
+    function subTest(uint256 a, uint256 b) public pure {
+        uint256 c = a - b;
+    }
+
+    function subAssemblyTest(uint256 a, uint256 b) public pure {
+        assembly {
+            let c := sub(a, b)
+
+            if gt(c, a) {
+                mstore(0x00, "underflow")
+                revert(0x00, 0x20)
+            }
+        }
+    }
+
+    function mulTest(uint256 a, uint256 b) public pure {
+        uint256 c = a * b;
+    }
+
+    function mulAssemblyTest(uint256 a, uint256 b) public pure {
+        assembly {
+            let c := mul(a, b)
+
+            if lt(c, a) {
+                mstore(0x00, "overflow")
+                revert(0x00, 0x20)
+            }
+        }
+    }
+
+    function divTest(uint256 a, uint256 b) public pure {
+        uint256 c = a * b;
+    }
+
+    function divAssemblyTest(uint256 a, uint256 b) public pure {
+        assembly {
+            let c := div(a, b)
+
+            if gt(c, a) {
+                mstore(0x00, "underflow")
+                revert(0x00, 0x20)
+            }
+        }
+    }
+}
  
 
 ```
 
 ### Gas Report
 ```js
+
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ GasReport contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 128377             ┆ 673             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ addAssemblyTest    ┆ 308             ┆ 308 ┆ 308    ┆ 308 ┆ 1       │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ addTest            ┆ 391             ┆ 391 ┆ 391    ┆ 391 ┆ 1       │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ divAssemblyTest    ┆ 332             ┆ 332 ┆ 332    ┆ 332 ┆ 1       │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ divTest            ┆ 369             ┆ 369 ┆ 369    ┆ 369 ┆ 1       │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ mulAssemblyTest    ┆ 354             ┆ 354 ┆ 354    ┆ 354 ┆ 1       │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ mulTest            ┆ 348             ┆ 348 ┆ 348    ┆ 348 ┆ 1       │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ subAssemblyTest    ┆ 329             ┆ 329 ┆ 329    ┆ 329 ┆ 1       │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ subTest            ┆ 322             ┆ 322 ┆ 322    ┆ 322 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
 
 ```
 
