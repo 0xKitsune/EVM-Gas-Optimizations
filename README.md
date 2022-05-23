@@ -22,10 +22,17 @@ for (uint i = 0; i < 10; ++i) {
 // code here
 }
 
-//even more optimized
+//more optimized
 for (uint i = 0; i < 10) {
 // code here
  unchecked{++i;}
+}
+
+//even more optimized
+ assembly {
+   for {let i := 0} lt(i, _toPids.length) {i := add(i, 0x01)} {
+    //code goes here
+    }
 }
 
 ```
