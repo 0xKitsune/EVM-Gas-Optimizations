@@ -215,36 +215,73 @@ contract GasReport {
 
 
 ## Short circuiting
+When an if statement has more than one possible case, list the more freqently occuring case first. This will allow less computation to evaluate the case and enter the body of the if statement. The gas report shown below is a result of passing in `0` as `a`. 
 
 ```js
+contract GasReport {
+    function noShortCircuit(uint256 a) public pure {
+        if (a > 1000 || a != 0) {}
+    }
 
-// f(x) is low cost
-// g(y) is expensive
-
-//unoptimized
-if (g(y) || f(x)){
-    //code here
+    function shortCircuit(uint256 a) public pure {
+        if (a != 0 || a > 1000) {}
+    }
 }
+```
 
+### Gas Report
+```js
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ GasReport contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 39293              ┆ 227             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ noShortCircuit     ┆ 251             ┆ 251 ┆ 251    ┆ 251 ┆ 1       │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ shortCircuit       ┆ 229             ┆ 229 ┆ 229    ┆ 229 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
 
-//optimized
-if (f(x) || g(y)){
-    //code here
-}
 ```
 
 
 
+
 ## Use `calldata` instead of `memory` where possible
+Mark data types as `calldata` instead of `memory` where possible. This makes it so that the data is not automatically loaded into memory. If the data passed into the function does not need to be changed (like updating values in an array), it can be passed in as `calldata`.
 
 ```js
-contract Unoptimized {
-    function unoptimizedGasTest(bytes memory data) public {}
+
+contract GasReport {
+    function useMemory(uint256[] memory data) public pure {
+        //do something
+    }
+
+    function useCalldata(uint256[] calldata data) public pure {
+        //do something
+    }
 }
 
-contract Optimized {
-    function optimizedGasTest(bytes calldata data) public {}
-}
+```
+
+### Gas Report
+```js
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ GasReport contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 95941              ┆ 511             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ useCalldata        ┆ 375             ┆ 375 ┆ 375    ┆ 375 ┆ 1       │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ useMemory          ┆ 680             ┆ 680 ┆ 680    ┆ 680 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
 
 ```
 
