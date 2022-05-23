@@ -11,6 +11,29 @@ Use `++i` instead of `i++`. This is especially useful in for loops but this opti
 ### Optimization
 ```js
 
+contract GasTest is DSTest {
+    Contract0 c0;
+    Contract1 c1;
+    Contract2 c2;
+    Contract3 c3;
+    Contract4 c4;
+
+    function setUp() public {
+        c0 = new Contract0();
+        c1 = new Contract1();
+        c2 = new Contract2();
+        c3 = new Contract3();
+        c4 = new Contract4();
+    }
+
+    function testGas() public {
+        c0.iPlusPlus();
+        c1.plusPlusI();
+        c2.uncheckedPlusPlusI();
+        c3.safeUncheckedPlusPlusI();
+        c4.inlineAssemblyLoop();
+    }
+}
 
 contract Contract0 {
     //loop with i++
@@ -152,18 +175,52 @@ contract Contract4 {
 
 ## Use assembly for math (add, sub, mul, div)
 
-Use assembly for math instead of Solidity. You can check for overflow/underflow in assembly as seen below.
+Use assembly for math instead of Solidity. You can check for overflow/underflow in assembly to ensure safety.
 
 ### Optimization
 ```js
 
-contract GasReport {
+contract GasTest is DSTest {
+    Contract0 c0;
+    Contract1 c1;
+    Contract2 c2;
+    Contract3 c3;
+    Contract4 c4;
+    Contract5 c5;
+    Contract6 c6;
+    Contract7 c7;
 
+    function setUp() public {
+        c0 = new Contract0();
+        c1 = new Contract1();
+        c2 = new Contract2();
+        c3 = new Contract3();
+        c4 = new Contract4();
+        c5 = new Contract5();
+        c6 = new Contract6();
+        c7 = new Contract7();
+    }
+
+    function testGas() public {
+        c0.addTest(34598345, 100);
+        c1.addAssemblyTest(34598345, 100);
+        c2.subTest(34598345, 100);
+        c3.subAssemblyTest(34598345, 100);
+        c4.mulTest(34598345, 100);
+        c5.mulAssemblyTest(34598345, 100);
+        c6.divTest(34598345, 100);
+        c7.divAssemblyTest(34598345, 100);
+    }
+}
+
+contract Contract0 {
     //addition in Solidity
     function addTest(uint256 a, uint256 b) public pure {
         uint256 c = a + b;
     }
+}
 
+contract Contract1 {
     //addition in assembly
     function addAssemblyTest(uint256 a, uint256 b) public pure {
         assembly {
@@ -175,12 +232,16 @@ contract GasReport {
             }
         }
     }
+}
 
+contract Contract2 {
     //subtraction in Solidity
     function subTest(uint256 a, uint256 b) public pure {
         uint256 c = a - b;
     }
+}
 
+contract Contract3 {
     //subtraction in assembly
     function subAssemblyTest(uint256 a, uint256 b) public pure {
         assembly {
@@ -192,12 +253,16 @@ contract GasReport {
             }
         }
     }
+}
 
+contract Contract4 {
     //multiplication in Solidity
     function mulTest(uint256 a, uint256 b) public pure {
         uint256 c = a * b;
     }
+}
 
+contract Contract5 {
     //multiplication in assembly
     function mulAssemblyTest(uint256 a, uint256 b) public pure {
         assembly {
@@ -209,12 +274,16 @@ contract GasReport {
             }
         }
     }
+}
 
+contract Contract6 {
     //division in Solidity
     function divTest(uint256 a, uint256 b) public pure {
         uint256 c = a * b;
     }
+}
 
+contract Contract7 {
     //division in assembly
     function divAssemblyTest(uint256 a, uint256 b) public pure {
         assembly {
@@ -227,7 +296,7 @@ contract GasReport {
         }
     }
 }
- 
+
 
 ```
 
@@ -235,29 +304,92 @@ contract GasReport {
 ```js
 
 ╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
-│ GasReport contract ┆                 ┆     ┆        ┆     ┆         │
+│ Contract0 contract ┆                 ┆     ┆        ┆     ┆         │
 ╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
 │ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ 128377             ┆ 673             ┆     ┆        ┆     ┆         │
+│ 40493              ┆ 233             ┆     ┆        ┆     ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
 │ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ addAssemblyTest    ┆ 308             ┆ 308 ┆ 308    ┆ 308 ┆ 1       │
+│ addTest            ┆ 303             ┆ 303 ┆ 303    ┆ 303 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract1 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ addTest            ┆ 391             ┆ 391 ┆ 391    ┆ 391 ┆ 1       │
+│ 37087              ┆ 216             ┆     ┆        ┆     ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ divAssemblyTest    ┆ 332             ┆ 332 ┆ 332    ┆ 332 ┆ 1       │
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ divTest            ┆ 369             ┆ 369 ┆ 369    ┆ 369 ┆ 1       │
+│ addAssemblyTest    ┆ 263             ┆ 263 ┆ 263    ┆ 263 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract2 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ mulAssemblyTest    ┆ 354             ┆ 354 ┆ 354    ┆ 354 ┆ 1       │
+│ 40293              ┆ 232             ┆     ┆        ┆     ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ mulTest            ┆ 348             ┆ 348 ┆ 348    ┆ 348 ┆ 1       │
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ subAssemblyTest    ┆ 329             ┆ 329 ┆ 329    ┆ 329 ┆ 1       │
+│ subTest            ┆ 300             ┆ 300 ┆ 300    ┆ 300 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract3 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ subTest            ┆ 322             ┆ 322 ┆ 322    ┆ 322 ┆ 1       │
+│ 37287              ┆ 217             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ subAssemblyTest    ┆ 263             ┆ 263 ┆ 263    ┆ 263 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract4 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 41893              ┆ 240             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ mulTest            ┆ 325             ┆ 325 ┆ 325    ┆ 325 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract5 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 37087              ┆ 216             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ mulAssemblyTest    ┆ 265             ┆ 265 ┆ 265    ┆ 265 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract6 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 41893              ┆ 240             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ divTest            ┆ 325             ┆ 325 ┆ 325    ┆ 325 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract7 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 37287              ┆ 217             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ divAssemblyTest    ┆ 265             ┆ 265 ┆ 265    ┆ 265 ┆ 1       │
 ╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
 
 ```
@@ -267,32 +399,43 @@ contract GasReport {
 When an if statement has more than one possible case, list the more freqently occuring case first. This will allow less computation to evaluate the case and enter the body of the if statement. The gas report shown below is a result of passing in `0` as `a`. 
 
 ```js
-contract GasReport {
+
+contract GasTest is DSTest {
+    Contract0 c0;
+    Contract1 c1;
+    
+    function setUp() public {
+        c0 = new Contract0();
+        c1 = new Contract1();
+    }
+
+    function testNoShortCircuit() public {
+        c0.noShortCircuit(0);
+    }
+
+    function testShortCircuit() public {
+        c1.shortCircuit(0);
+    }
+}
+
+contract Contract0 {
     function noShortCircuit(uint256 a) public pure {
         if (a > 1000 || a != 0) {}
     }
+}
 
+contract Contract1 {
     function shortCircuit(uint256 a) public pure {
         if (a != 0 || a > 1000) {}
     }
 }
+
 ```
 
 ### Gas Report
 ```js
-╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
-│ GasReport contract ┆                 ┆     ┆        ┆     ┆         │
-╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
-│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
-├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ 39293              ┆ 227             ┆     ┆        ┆     ┆         │
-├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
-├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ noShortCircuit     ┆ 251             ┆ 251 ┆ 251    ┆ 251 ┆ 1       │
-├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ shortCircuit       ┆ 229             ┆ 229 ┆ 229    ┆ 229 ┆ 1       │
-╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+[PASS] testNoShortCircuit() (gas: 5448)
+[PASS] testShortCircuit() (gas: 5357)
 
 ```
 
@@ -304,78 +447,114 @@ Mark data types as `calldata` instead of `memory` where possible. This makes it 
 
 ```js
 
-contract GasReport {
-    function useMemory(uint256[] memory data) public pure {
-        //do something
+contract GasTest is DSTest {
+    Contract0 c0;
+    Contract1 c1;
+
+    function setUp() public {
+        c0 = new Contract0();
+        c1 = new Contract1();
     }
 
-    function useCalldata(uint256[] calldata data) public pure {
+    function testGas() public {
+        uint256[] memory data = new uint256[](2);
+        data[0] = 1398239832;
+        data[1] = 9832948234;
+        c0.useMemory(data);
+        c1.useCalldata(data);
+    }
+}
+
+contract Contract0 {
+    function useMemory(uint256[] memory data) public pure {
         //do something
     }
 }
 
+contract Contract1 {
+    function useCalldata(uint256[] calldata data) public pure {
+        //do something
+    }
+}
 ```
 
 ### Gas Report
 ```js
 ╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
-│ GasReport contract ┆                 ┆     ┆        ┆     ┆         │
+│ Contract0 contract ┆                 ┆     ┆        ┆     ┆         │
 ╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
 │ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ 95941              ┆ 511             ┆     ┆        ┆     ┆         │
+│ 66717              ┆ 365             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ useMemory          ┆ 658             ┆ 658 ┆ 658    ┆ 658 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract1 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 45699              ┆ 259             ┆     ┆        ┆     ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
 │ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
 │ useCalldata        ┆ 375             ┆ 375 ┆ 375    ┆ 375 ┆ 1       │
-├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ useMemory          ┆ 680             ┆ 680 ┆ 680    ┆ 680 ┆ 1       │
 ╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
 
 ```
 
 ## Pack calldata where possible
 
-Every byte of calldata costs gas with non-zero calldata costing per byte and zero value calldata costing per byte. By packing calldata, you can reduce the zero value calldata, thus making it more efficient when calling a function. You will need to decode the calldata correctly inside of the function if you pack calldata. 
+Every byte of calldata costs gas with non-zero calldata costing 4 gas per byte and zero value calldata costing 68 gas per byte since [EIP-2028](https://ethereum-magicians.org/t/eip-2028-transaction-data-gas-cost-reduction/3280). By packing calldata, you can reduce the zero value calldata, thus making it more efficient when calling a function. You will need to decode the calldata correctly inside of the function if you pack calldata.
 
 ```js
 
-contract Unoptimized {
-    function unoptimizedGasTest(address exampleAddress, uint256 exampleUint256) public{
+contract Contract0 {
+    function notPackedCalldata(address exampleAddress, uint256 exampleUint256) public{
         //do something
     }
 }
 
-contract Optimized {
-    function optimizedGasTest(bytes calldata data) public {
+contract Contract1 {
+    function packedCalldata(bytes calldata data) public {
         (address exampleAddress, uint256 exampleUint256) = abi.decode(data,(address, uint256));
-
         //do something
     }
 }
 
 ```
 
+
 ## Pack structs
 When creating structs, make sure that the variables are listed in ascending order by data type. The compiler will pack the variables that can fit into one 32 byte slot. If the variables are not listed in ascending order, the compiler may not pack the data into one slot, causing additional `sload` and `sstore` instructions when reading/storing the struct into the contract's storage.
 
 ```js
 
-contract GasReport {
+contract GasTest is DSTest {
+    Contract0 c0;
+    Contract1 c1;
+
+    function setUp() public {
+        c0 = new Contract0();
+        c1 = new Contract1();
+    }
+
+    function testGas() public {
+        c0.storeUnoptimizedStruct();
+        c1.storeOptimizedStruct();
+    }
+}
+
+contract Contract0 {
     struct UnoptimizedStruct {
         uint128 a;
         uint256 b;
         uint128 c;
     }
 
-    struct OptimizedStruct {
-        uint128 a;
-        uint128 b;
-        uint256 c;
-    }
-
     mapping(uint256 => UnoptimizedStruct) idToUnoptimizedStruct;
-    mapping(uint256 => OptimizedStruct) idToOptimizedStruct;
 
     function storeUnoptimizedStruct() public {
         idToUnoptimizedStruct[0] = UnoptimizedStruct(
@@ -384,6 +563,16 @@ contract GasReport {
             234923093
         );
     }
+}
+
+contract Contract1 {
+    struct OptimizedStruct {
+        uint128 a;
+        uint128 b;
+        uint256 c;
+    }
+
+    mapping(uint256 => OptimizedStruct) idToOptimizedStruct;
 
     function storeOptimizedStruct() public {
         idToOptimizedStruct[0] = OptimizedStruct(
@@ -393,25 +582,32 @@ contract GasReport {
         );
     }
 }
-
-
 ```
 
 ### Gas Report
 ```js
 ╭────────────────────────┬─────────────────┬───────┬────────┬───────┬─────────╮
-│ GasReport contract     ┆                 ┆       ┆        ┆       ┆         │
+│ Contract0 contract     ┆                 ┆       ┆        ┆       ┆         │
 ╞════════════════════════╪═════════════════╪═══════╪════════╪═══════╪═════════╡
 │ Deployment Cost        ┆ Deployment Size ┆       ┆        ┆       ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ 94941                  ┆ 506             ┆       ┆        ┆       ┆         │
+│ 64717                  ┆ 355             ┆       ┆        ┆       ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
 │ Function Name          ┆ min             ┆ avg   ┆ median ┆ max   ┆ # calls │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ storeOptimizedStruct   ┆ 44508           ┆ 44508 ┆ 44508  ┆ 44508 ┆ 1       │
-├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ storeUnoptimizedStruct ┆ 66623           ┆ 66623 ┆ 66623  ┆ 66623 ┆ 1       │
+│ storeUnoptimizedStruct ┆ 66611           ┆ 66611 ┆ 66611  ┆ 66611 ┆ 1       │
 ╰────────────────────────┴─────────────────┴───────┴────────┴───────┴─────────╯
+╭──────────────────────┬─────────────────┬───────┬────────┬───────┬─────────╮
+│ Contract1 contract   ┆                 ┆       ┆        ┆       ┆         │
+╞══════════════════════╪═════════════════╪═══════╪════════╪═══════╪═════════╡
+│ Deployment Cost      ┆ Deployment Size ┆       ┆        ┆       ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 51505                ┆ 289             ┆       ┆        ┆       ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name        ┆ min             ┆ avg   ┆ median ┆ max   ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ storeOptimizedStruct ┆ 44474           ┆ 44474 ┆ 44474  ┆ 44474 ┆ 1       │
+╰──────────────────────┴─────────────────┴───────┴────────┴───────┴─────────╯
 
 ```
 
