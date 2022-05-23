@@ -6,7 +6,7 @@ This repo was made to document of all of the gas optimizations that I have come 
 
 ## `++i` instead of `i++`
 
-Use `++i` instead of `i++`. This is especially useful in for loops but this optimization can be used anywhere in your code. 
+Use `unchecked{++i}` instead of `i++`. This is especially useful in for loops but this optimization can be used anywhere in your code. 
 
 ```js
 
@@ -20,6 +20,12 @@ for (uint i = 0; i < 10; i++) {
 //++i -> Load, Add, Store
 for (uint i = 0; i < 10; ++i) {
 // code here
+}
+
+//even more optimized
+for (uint i = 0; i < 10) {
+// code here
+ unchecked{++i;}
 }
 
 ```
