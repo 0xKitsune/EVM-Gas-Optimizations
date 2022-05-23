@@ -62,11 +62,7 @@ contract GasReport {
         assembly {
             let j := 0
 
-            for {
-                let i := 0
-            } lt(i, 10) {
-                i := add(i, 0x01)
-            } {
+            for {let i := 0} lt(i, 10) {i := add(i, 0x01)} {
                 j := add(j, 0x01)
             }
         }
