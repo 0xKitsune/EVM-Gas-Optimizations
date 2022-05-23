@@ -714,21 +714,6 @@ contract Contract2 {
 ```
 
 
-## `int` can be more expensive than `uint` in some instances
-
-Negative ints are encoded with leading 0xf bytes. Nonzero bytes in calldata cost 4x more gas than zero bytes.
-
-```js
-
- »  abi.encode(int(-8))
-0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8
-
-
- »  abi.encode(uint(8))
-0x0000000000000000000000000000000000000000000000000000000000000008
-
-```
-
 
 ## Use `selfbalance()` instead of `address(this).balance` when getting your contract's balance of ETH.
 
@@ -919,5 +904,21 @@ function multipleRequire(uint256 num) public pure {
         require(num < 10);
         require(num == 3);
 }
+```
 
+
+## `int` can be more expensive than `uint` in some instances
+
+Negative ints are encoded with leading 0xf bytes. Nonzero bytes in calldata cost 4x more gas than zero bytes.
+
+```js
+
+ »  abi.encode(int(-8))
+0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8
+
+
+ »  abi.encode(uint(8))
+0x0000000000000000000000000000000000000000000000000000000000000008
+
+```
 
