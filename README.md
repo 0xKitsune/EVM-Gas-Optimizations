@@ -1052,7 +1052,7 @@ contract GasTest is DSTest {
 
     function testGas() public {
         c0.updateOwner(0x158B28A1b1CB1BE12C6bD8f5a646a0e3B2024734);
-        c1.assemblUpdateOwner(0x158B28A1b1CB1BE12C6bD8f5a646a0e3B2024734);
+        c1.assemblyUpdateOwner(0x158B28A1b1CB1BE12C6bD8f5a646a0e3B2024734);
     }
 }
 
