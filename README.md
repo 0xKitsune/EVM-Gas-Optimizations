@@ -4,36 +4,98 @@ This repo was made to document of all of the gas optimizations that I have come 
 
 <br>
 
-## `unchecked{++i}` instead of `i++`
+## `unchecked{++i}` instead of `i++` (or use assembly when applicable)
 
-Use `unchecked{++i}` instead of `i++`. This is especially useful in for loops but this optimization can be used anywhere in your code. 
+Use `++i` instead of `i++`. This is especially useful in for loops but this optimization can be used anywhere in your code. You can also use `unchecked{++i;}` for even more gas savings but this will not check to see if `i` overflows. For extra safety if you are worried about this, you can add a require statement after the loop checking if `i` is equal to the final incremented value.
 
+### Optimization
 ```js
 
-//unoptimized
-//i++ -> Load, Store, Add, Store
-for (uint i = 0; i < 10; i++) {
-// code here
+contract GasReport {
+    function iPlusPlus() public pure {
+        uint256 j = 0;
+        for (uint256 i; i < 10; i++) {
+            j++;
+        }
+    }
+
+    function plusPlusI() public pure {
+        uint256 j = 0;
+        for (uint256 i; i < 10; ++i) {
+            j++;
+        }
+    }
+
+    function uncheckedPlusPlusI() public pure {
+        uint256 j = 0;
+        for (uint256 i; i < 10; ) {
+            j++;
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    function safeUncheckedPlusPlusI() public pure {
+        uint256 j = 0;
+        uint256 i = 0;
+        for (i; i < 10; ) {
+            j++;
+
+            unchecked {
+                ++i;
+            }
+        }
+        
+        //check for overflow
+        assembly {
+            if lt(i, 10) {
+                mstore(0x00, "loop overflow")
+                revert(0x00, 0x20)
+            }
+        }
+    }
+
+
+    function inlineAssemblyLoop() public pure {
+        assembly {
+            let j := 0
+
+            for {
+                let i := 0
+            } lt(i, 10) {
+                i := add(i, 0x01)
+            } {
+                j := add(j, 0x01)
+            }
+        }
+    }
 }
 
-//optimized
-//++i -> Load, Add, Store
-for (uint i = 0; i < 10; ++i) {
-// code here
-}
+```
 
-//more optimized
-for (uint i = 0; i < 10) {
-// code here
- unchecked{++i;}
-}
-
-//even more optimized
-assembly {
-  for {let i := 0} lt(i, 10) {i := add(i, 0x01)} {
-    //code goes here
-  }
-}
+### Gas Report
+```
+╭────────────────────────┬─────────────────┬──────┬────────┬──────┬─────────╮
+│ GasReport contract     ┆                 ┆      ┆        ┆      ┆         │
+╞════════════════════════╪═════════════════╪══════╪════════╪══════╪═════════╡
+│ Deployment Cost        ┆ Deployment Size ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 89535                  ┆ 479             ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name          ┆ min             ┆ avg  ┆ median ┆ max  ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ iPlusPlus              ┆ 2061            ┆ 2061 ┆ 2061   ┆ 2061 ┆ 1       │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ inlineAssemblyLoop     ┆ 753             ┆ 753  ┆ 753    ┆ 753  ┆ 1       │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ plusPlusI              ┆ 1989            ┆ 1989 ┆ 1989   ┆ 1989 ┆ 1       │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ safeUncheckedPlusPlusI ┆ 1421            ┆ 1421 ┆ 1421   ┆ 1421 ┆ 1       │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ uncheckedPlusPlusI     ┆ 1417            ┆ 1417 ┆ 1417   ┆ 1417 ┆ 1       │
+╰────────────────────────┴─────────────────┴──────┴────────┴──────┴─────────╯
 
 ```
 
