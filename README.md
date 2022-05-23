@@ -714,64 +714,68 @@ contract Contract2 {
 ```
 
 
-
-## Use `selfbalance()` instead of `address(this).balance` when getting your contract's balance of ETH.
-
-```js
-//unoptimized
-uint256 thisContractBalance = address(this).balance;
-
-//optimized
-uint256 thisContractBalance;
-assembly{
-    thisContractBalance := selfbalance()
-}
-```
-
-
-## Use `balance(address)` instead of `address.balance()` when getting an external contract's balance of ETH.
-
-```js
-//unoptimized
-uint256 contractBalance = someAddress.balance();
-
-//optimized
-uint256 contractBalance;
-assembly{
-    contractBalance := balance(someAddress)
-}
-```
-
-
 ## Use assembly to hash efficiently
 
 ```js
-//unoptimized
-keccak256(abi.encodePacked(a, b))
 
-//optimized
-assembly{
-  mstore(0x00, a)
-  mstore(0x20, b)
-  keccak256(0x00, 0x40)
+contract GasTest is DSTest {
+    Contract0 c0;
+    Contract1 c1;
+
+    function setUp() public {
+        c0 = new Contract0();
+        c1 = new Contract1();
+    }
+
+    function testGas() public view {
+        c0.solidityHash(2309349, 2304923409);
+        c1.assemblyHash(2309349, 2304923409);
+    }
+}
+
+contract Contract0 {
+    function solidityHash(uint256 a, uint256 b) public view {
+        //unoptimized
+        keccak256(abi.encodePacked(a, b));
+    }
+}
+
+contract Contract1 {
+    function assemblyHash(uint256 a, uint256 b) public view {
+        //optimized
+        assembly {
+            mstore(0x00, a)
+            mstore(0x20, b)
+            let hashedVal := keccak256(0x00, 0x40)
+        }
+    }
 }
 ```
 
-
-## Use `if iszero(x)` instead of `if (x)`
-
+### Gas Report
 ```js
-//unoptimized
-if (x){
-  //code here
-}
-
-//optimized
-assembly{
-  if iszero(x){
-    //code here
-   }
-}
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract0 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 36687              ┆ 214             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ solidityHash       ┆ 313             ┆ 313 ┆ 313    ┆ 313 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract1 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 31281              ┆ 186             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ assemblyHash       ┆ 231             ┆ 231 ┆ 231    ┆ 231 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
 ```
 
 
@@ -779,57 +783,189 @@ assembly{
 
 ```js
 
-contract Unoptimized {
-    function unoptimizedGasTest() public {
-        uint256 val = 10;
-        uint256 valMulTwo = val * 2;
+contract GasTest is DSTest {
+    Contract0 c0;
+    Contract1 c1;
+
+    function setUp() public {
+        c0 = new Contract0();
+        c1 = new Contract1();
+    }
+
+    function testGas() public view {
+        c0.div2();
+        c1.shr2();
     }
 }
 
-contract Optimized {
-    function optimizedGasTest() public {
+contract Contract0 {
+    function div2() public view {
         uint256 val = 10;
-        uint256 valMulTwo = val >> 2;
+        uint256 valDivTwo = val / 2;
     }
 }
+
+contract Contract1 {
+    function shr2() public view {
+        uint256 val = 10;
+        uint256 valDivTwo = val >> 2;
+    }
+}
+```
+
+
+### Gas Report
+```js
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract0 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 31681              ┆ 188             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ div2               ┆ 194             ┆ 194 ┆ 194    ┆ 194 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract1 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 20275              ┆ 130             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ shr2               ┆ 98              ┆ 98  ┆ 98     ┆ 98  ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+
 ```
 
 ## Left shift instead of multiplying by two
 
 ```js
 
-contract Unoptimized {
-    function unoptimizedGasTest() public {
-        uint256 val = 10;
-        uint256 valMulTwo = val/2;
+contract GasTest is DSTest {
+    Contract0 c0;
+    Contract1 c1;
+
+    function setUp() public {
+        c0 = new Contract0();
+        c1 = new Contract1();
+    }
+
+    function testGas() public view {
+        c0.mul2();
+        c1.shl2();
     }
 }
 
-contract Optimized {
-    function optimizedGasTest() public {
+contract Contract0 {
+    function mul2() public view {
+        uint256 val = 10;
+        uint256 valMulTwo = val * 2;
+    }
+}
+
+contract Contract1 {
+    function shl2() public view {
         uint256 val = 10;
         uint256 valMulTwo = val << 2;
     }
 }
 ```
 
+### Gas Report
+```js
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract0 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 33887              ┆ 199             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ mul2               ┆ 226             ┆ 226 ┆ 226    ┆ 226 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract1 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 20275              ┆ 130             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ shl2               ┆ 98              ┆ 98  ┆ 98     ┆ 98  ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+```
+
 ## Use assembly to check for address(0)
 ```js
-    //unoptimized
-    function unoptimizedGasTest(address owner) public view {
-        require(owner != address(0), "zero address)");
+  
+contract GasTest is DSTest {
+    Contract0 c0;
+    Contract1 c1;
+    
+    function setUp() public {
+        c0 = new Contract0();
+        c1 = new Contract1();=
     }
 
-    //optimized
-    function optimizedGasTest(address owner) public view {
+    function testGas() public view {
+        c0.ownerNotZero();
+        c1.assemblyOwnerNotZero();
+    }
+}
+
+contract Contract0 {
+    address owner = 0x158B28A1b1CB1BE12C6bD8f5a646a0e3B2024734;
+
+    function ownerNotZero() public view {
+        require(owner != address(0), "zero address)");
+    }
+}
+
+contract Contract1 {
+    address owner = 0x158B28A1b1CB1BE12C6bD8f5a646a0e3B2024734;
+
+    function assemblyOwnerNotZero() public view {
         assembly {
-            if iszero(owner) {
+            if iszero(sload(owner.slot)) {
                 mstore(0x00, "zero address")
                 revert(0x00, 0x20)
             }
         }
     }
+}
 
+```
+
+### Gas Report
+```js
+╭────────────────────┬─────────────────┬──────┬────────┬──────┬─────────╮
+│ Contract0 contract ┆                 ┆      ┆        ┆      ┆         │
+╞════════════════════╪═════════════════╪══════╪════════╪══════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 59023              ┆ 253             ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg  ┆ median ┆ max  ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ ownerNotZero       ┆ 2257            ┆ 2257 ┆ 2257   ┆ 2257 ┆ 1       │
+╰────────────────────┴─────────────────┴──────┴────────┴──────┴─────────╯
+╭──────────────────────┬─────────────────┬──────┬────────┬──────┬─────────╮
+│ Contract1 contract   ┆                 ┆      ┆        ┆      ┆         │
+╞══════════════════════╪═════════════════╪══════╪════════╪══════╪═════════╡
+│ Deployment Cost      ┆ Deployment Size ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 50217                ┆ 208             ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name        ┆ min             ┆ avg  ┆ median ┆ max  ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ assemblyOwnerNotZero ┆ 2239            ┆ 2239 ┆ 2239   ┆ 2239 ┆ 1       │
+╰──────────────────────┴─────────────────┴──────┴────────┴──────┴─────────╯
 ```
 
 ## Use assembly to check if msg.sender == owner (or any stored address)
@@ -837,49 +973,106 @@ contract Optimized {
 
 ```js
 
-contract Unoptimized {
+contract GasTest is DSTest {
+    Contract0 c0;
+    Contract1 c1;
+
+    function setUp() public {
+        c0 = new Contract0();
+        c1 = new Contract1();
+    }
+
+    function testGas() public view {
+        console.log(address(this));
+        c0.msgSenderIsOwner();
+        c1.assemblyMsgSenderIsOwner();
+    }
+}
+
+contract Contract0 {
     address owner = 0xb4c79daB8f259C7Aee6E5b2Aa729821864227e84;
 
-    function unoptimizedGasTest() public {
+    function msgSenderIsOwner() public view {
         require(msg.sender == owner, "!auth");
     }
 }
 
-contract Optimized {
+contract Contract1 {
     address owner = 0xb4c79daB8f259C7Aee6E5b2Aa729821864227e84;
 
-    function optimizedGasTest() public {
+    function assemblyMsgSenderIsOwner() public view {
         assembly {
             if iszero(eq(sload(owner.slot), caller())) {
                 mstore(0x00, "!auth")
                 revert(0x00, 0x20)
             }
-
         }
     }
 }
 
+
+```
+### Gas Report
+```js
+╭────────────────────┬─────────────────┬──────┬────────┬──────┬─────────╮
+│ Contract0 contract ┆                 ┆      ┆        ┆      ┆         │
+╞════════════════════╪═════════════════╪══════╪════════╪══════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 57823              ┆ 247             ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg  ┆ median ┆ max  ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ msgSenderIsOwner   ┆ 2262            ┆ 2262 ┆ 2262   ┆ 2262 ┆ 1       │
+╰────────────────────┴─────────────────┴──────┴────────┴──────┴─────────╯
+╭──────────────────────────┬─────────────────┬──────┬────────┬──────┬─────────╮
+│ Contract1 contract       ┆                 ┆      ┆        ┆      ┆         │
+╞══════════════════════════╪═════════════════╪══════╪════════╪══════╪═════════╡
+│ Deployment Cost          ┆ Deployment Size ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 49217                    ┆ 203             ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name            ┆ min             ┆ avg  ┆ median ┆ max  ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ assemblyMsgSenderIsOwner ┆ 2244            ┆ 2244 ┆ 2244   ┆ 2244 ┆ 1       │
+╰──────────────────────────┴─────────────────┴──────┴────────┴──────┴─────────╯
 ```
 
 
-## Use assembly to update owner (or any stored address/value)
+## Use assembly to read storage values
 
+
+## Use assembly to write storage values
 
 ```js
 
+contract GasTest is DSTest {
+    Contract0 c0;
+    Contract1 c1;
 
-contract Unoptimized {
+    function setUp() public {
+        c0 = new Contract0();
+        c1 = new Contract1();
+    }
+
+    function testGas() public {
+        c0.updateOwner(0x158B28A1b1CB1BE12C6bD8f5a646a0e3B2024734);
+        c1.assemblUpdateOwner(0x158B28A1b1CB1BE12C6bD8f5a646a0e3B2024734);
+    }
+}
+
+contract Contract0 {
     address owner = 0xb4c79daB8f259C7Aee6E5b2Aa729821864227e84;
 
-    function unoptimizedGasTest(address newOwner) public {
+    function updateOwner(address newOwner) public {
         owner = newOwner;
     }
 }
 
-contract Optimized {
+contract Contract1 {
     address owner = 0xb4c79daB8f259C7Aee6E5b2Aa729821864227e84;
 
-    function optimizedGasTest(address newOwner) public {
+    function assemblyUpdateOwner(address newOwner) public {
         assembly {
             sstore(owner.slot, newOwner)
         }
@@ -888,22 +1081,155 @@ contract Optimized {
 
 ```
 
+### Gas Report
+```js
+╭────────────────────┬─────────────────┬──────┬────────┬──────┬─────────╮
+│ Contract0 contract ┆                 ┆      ┆        ┆      ┆         │
+╞════════════════════╪═════════════════╪══════╪════════╪══════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 60623              ┆ 261             ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg  ┆ median ┆ max  ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ updateOwner        ┆ 5302            ┆ 5302 ┆ 5302   ┆ 5302 ┆ 1       │
+╰────────────────────┴─────────────────┴──────┴────────┴──────┴─────────╯
+╭────────────────────┬─────────────────┬──────┬────────┬──────┬─────────╮
+│ Contract1 contract ┆                 ┆      ┆        ┆      ┆         │
+╞════════════════════╪═════════════════╪══════╪════════╪══════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 54823              ┆ 232             ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg  ┆ median ┆ max  ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ assemblyUpdateOwner┆ 5236            ┆ 5236 ┆ 5236   ┆ 5236 ┆ 1       │
+╰────────────────────┴─────────────────┴──────┴────────┴──────┴─────────╯
+```
+
 ## Use multiple `require()` statments insted of `require(expression && expression && ...)`
 
 ```js
+contract GasTest is DSTest {
+    Contract0 c0;
+    Contract1 c1;
 
-//unoptimized
-function singleRequire(uint256 num) public pure {
-    require(num > 1 && num < 10 && num == 3);
+    function setUp() public {
+        c0 = new Contract0();
+        c1 = new Contract1();
+    }
+
+    function testGas() public {
+        c0.singleRequire(3);
+        c1.multipleRequire(3);
+    }
 }
 
+contract Contract0 {
+    function singleRequire(uint256 num) public {
+        require(num > 1 && num < 10 && num == 3);
+    }
+}
 
-//optimized
-function multipleRequire(uint256 num) public pure {
+contract Contract1 {
+    function multipleRequire(uint256 num) public {
         require(num > 1);
         require(num < 10);
         require(num == 3);
+    }
 }
+```
+
+### Gas Report
+```js
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract0 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 35487              ┆ 208             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ singleRequire      ┆ 286             ┆ 286 ┆ 286    ┆ 286 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract1 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 35887              ┆ 210             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ multipleRequire    ┆ 270             ┆ 270 ┆ 270    ┆ 270 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+
+```
+
+
+## Use custom errors instead of string error messages
+
+```js
+contract GasTest is DSTest {
+    Contract0 c0;
+    Contract1 c1;
+
+    function setUp() public {
+        c0 = new Contract0();
+        c1 = new Contract1();
+    }
+
+    function testFailGas() public {
+        c0.stringErrorMessage();
+        c1.customErrorMessage();
+    }
+}
+
+contract Contract0 {
+    function stringErrorMessage() public {
+        bool check = false;
+        require(check, "error message");
+    }
+}
+
+contract Contract1 {
+    error CustomError();
+
+    function customErrorMessage() public {
+        bool check = false;
+        if (!check) {
+            revert CustomError();
+        }
+    }
+}
+
+```
+
+### Gas Report
+```js
+╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract0 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 34087              ┆ 200             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ stringErrorMessage ┆ 230             ┆ 230 ┆ 230    ┆ 230 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract1 contract ┆                 ┆     ┆        ┆     ┆         │
+╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 26881              ┆ 164             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ customErrorMessage ┆ 167             ┆ 167 ┆ 167    ┆ 167 ┆ 1       │
+╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
 ```
 
 
@@ -921,4 +1247,56 @@ Negative ints are encoded with leading 0xf bytes. Nonzero bytes in calldata cost
 0x0000000000000000000000000000000000000000000000000000000000000008
 
 ```
+
+# Outdated Optimizations
+
+## Use `selfbalance()` instead of `address(this).balance` when getting your contract's balance of ETH.
+
+```js
+//unoptimized
+uint256 thisContractBalance = address(this).balance;
+
+//optimized
+uint256 thisContractBalance;
+assembly{
+    thisContractBalance := selfbalance()
+}
+```
+
+## Use `balance(address)` instead of `address.balance()` when getting an external contract's balance of ETH.
+
+```js
+//unoptimized
+uint256 contractBalance = someAddress.balance();
+
+//optimized
+uint256 contractBalance;
+assembly{
+    contractBalance := balance(someAddress)
+}
+```
+
+## ifzero(x) instead of if(x)
+```js
+contract Contract0 {
+    function ifX(bool x) public view {
+        //unoptimized
+        if (x) {
+            //code here
+        }
+    }
+}
+
+contract Contract1 {
+    function ifIszeroX(bool x) public view {
+        //optimized
+        assembly {
+            if iszero(x) {
+                //code here
+            }
+        }
+    }
+}
+```
+
 
