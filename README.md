@@ -804,7 +804,7 @@ contract Contract0 {
 contract Contract1 {
     function shr2() public view {
         uint256 val = 10;
-        uint256 valDivTwo = val >> 2;
+        uint256 valDivTwo = val >> 1;
     }
 }
 ```
@@ -866,7 +866,7 @@ contract Contract0 {
 contract Contract1 {
     function shl2() public view {
         uint256 val = 10;
-        uint256 valMulTwo = val << 2;
+        uint256 valMulTwo = val << 1;
     }
 }
 ```
@@ -1201,6 +1201,43 @@ contract Contract1 {
 }
 ```
 
+
+## Use `selfbalance()` instead of `address(this).balance` when getting your contract's balance of ETH.
+
+```js
+
+contract GasTest is DSTest {
+    Contract0 c0;
+    Contract1 c1;
+
+    function setUp() public {
+        c0 = new Contract0();
+        c1 = new Contract1();
+    }
+
+    function testGas() public {
+        c0.readBalance();
+        c1.assemblyReadBalance();
+    }
+}
+
+contract Contract0 {
+    function readBalance() public returns (uint256) {
+        return address(this).balance;
+    }
+}
+
+contract Contract1 {
+    function assemblyReadBalance() public returns (uint256) {
+        assembly {
+            let c := selfbalance()
+            mstore(0x00, c)
+            return(0x00, 0x20)
+        }
+    }
+}
+```
+
 ### Gas Report
 ```js
 ╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
@@ -1208,23 +1245,144 @@ contract Contract1 {
 ╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
 │ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ 95141              ┆ 507             ┆     ┆        ┆     ┆         │
+│ 23675              ┆ 147             ┆     ┆        ┆     ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
 │ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ unoptimized        ┆ 794             ┆ 794 ┆ 794    ┆ 794 ┆ 1       │
+│ readBalance        ┆ 148             ┆ 148 ┆ 148    ┆ 148 ┆ 1       │
 ╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+╭─────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract1 contract  ┆                 ┆     ┆        ┆     ┆         │
+╞═════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost     ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 27081               ┆ 165             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name       ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ assemblyReadBalance ┆ 133             ┆ 133 ┆ 133    ┆ 133 ┆ 1       │
+╰─────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+
+```
+
+
+## Use `balance(address)` instead of `address.balance()` when getting an external contract's balance of ETH.
+
+```js
+
+contract GasTest is DSTest {
+    Contract0 c0;
+    Contract1 c1;
+
+    function setUp() public {
+        c0 = new Contract0();
+        c1 = new Contract1();
+    }
+
+    function testGas() public {
+        c0.readBalance(0x158B28A1b1CB1BE12C6bD8f5a646a0e3B2024734);
+        c1.assemblyReadBalance(0x158B28A1b1CB1BE12C6bD8f5a646a0e3B2024734);
+    }
+}
+
+contract Contract0 {
+    function readBalance(address addr) public {
+        uint256 bal = address(addr).balance;
+        bal++;
+    }
+}
+
+contract Contract1 {
+    function assemblyReadBalance(address addr) public {
+        uint256 bal;
+        assembly {
+            bal := balance(addr)
+        }
+        bal++;
+    }
+}
+```
+
+### Gas Report
+```js
+╭────────────────────┬─────────────────┬──────┬────────┬──────┬─────────╮
+│ Contract0 contract ┆                 ┆      ┆        ┆      ┆         │
+╞════════════════════╪═════════════════╪══════╪════════╪══════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 45099              ┆ 256             ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg  ┆ median ┆ max  ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ readBalance        ┆ 2941            ┆ 2941 ┆ 2941   ┆ 2941 ┆ 1       │
+╰────────────────────┴─────────────────┴──────┴────────┴──────┴─────────╯
+╭─────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract1 contract  ┆                 ┆     ┆        ┆     ┆         │
+╞═════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost     ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 43293               ┆ 247             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name       ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ assemblyReadBalance ┆ 423             ┆ 423 ┆ 423    ┆ 423 ┆ 1       │
+╰─────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+```
+
+## iszero(iszero(x)) instead of if(x)
+```js
+
+contract Contract0 {
+    function ifX(bool x, uint256 a, uint256) public returns (uint256) {
+        uint256 b = 120923409;
+
+        if (x) {
+            return b;
+        }
+        
+        return a;
+    }
+}
+
+contract Contract1 {
+    function assemblyIszeroIszero(bool x, uint256 a, uint256 b) public returns (uint256) {
+        assembly {
+            if iszero(iszero(x)) {
+                mstore(0x00, b)
+                return(0x00, 0x20)
+            }
+        }
+        
+        return a;
+    }
+}
+```
+
+### Gas Report
+```js
 ╭────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
-│ Contract1 contract ┆                 ┆     ┆        ┆     ┆         │
+│ Contract0 contract ┆                 ┆     ┆        ┆     ┆         │
 ╞════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
 │ Deployment Cost    ┆ Deployment Size ┆     ┆        ┆     ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ 89941              ┆ 481             ┆     ┆        ┆     ┆         │
+│ 43693              ┆ 249             ┆     ┆        ┆     ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
 │ Function Name      ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ optimized          ┆ 746             ┆ 746 ┆ 746    ┆ 746 ┆ 1       │
+│ ifX                ┆ 373             ┆ 373 ┆ 373    ┆ 373 ┆ 1       │
 ╰────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+╭──────────────────────┬─────────────────┬─────┬────────┬─────┬─────────╮
+│ Contract1 contract   ┆                 ┆     ┆        ┆     ┆         │
+╞══════════════════════╪═════════════════╪═════╪════════╪═════╪═════════╡
+│ Deployment Cost      ┆ Deployment Size ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 42693                ┆ 244             ┆     ┆        ┆     ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name        ┆ min             ┆ avg ┆ median ┆ max ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ assemblyIszeroIszero ┆ 302             ┆ 302 ┆ 302    ┆ 302 ┆ 1       │
+╰──────────────────────┴─────────────────┴─────┴────────┴─────┴─────────╯
+
 ```
 
 
@@ -1436,55 +1594,5 @@ Negative ints are encoded with leading 0xf bytes. Nonzero bytes in calldata cost
 ```
 
 
-# Outdated Optimizations
-
-## Use `selfbalance()` instead of `address(this).balance` when getting your contract's balance of ETH.
-
-```js
-//unoptimized
-uint256 thisContractBalance = address(this).balance;
-
-//optimized
-uint256 thisContractBalance;
-assembly{
-    thisContractBalance := selfbalance()
-}
-```
-
-## Use `balance(address)` instead of `address.balance()` when getting an external contract's balance of ETH.
-
-```js
-//unoptimized
-uint256 contractBalance = someAddress.balance();
-
-//optimized
-uint256 contractBalance;
-assembly{
-    contractBalance := balance(someAddress)
-}
-```
-
-## ifzero(x) instead of if(x)
-```js
-contract Contract0 {
-    function ifX(bool x) public view {
-        //unoptimized
-        if (x) {
-            //code here
-        }
-    }
-}
-
-contract Contract1 {
-    function ifIszeroX(bool x) public view {
-        //optimized
-        assembly {
-            if iszero(x) {
-                //code here
-            }
-        }
-    }
-}
-```
 
 
