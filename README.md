@@ -1145,7 +1145,7 @@ contract Contract1 {
 ```
 
 
-## Use assembly to read storage values
+## Note: only works with uint256 so far because of cleaning, you can also do this within an unchecked block but then you need to do any logic within that block or else you don't have access to that variable you loaed in. Use assembly to read storage values 
 
 ```js
 
