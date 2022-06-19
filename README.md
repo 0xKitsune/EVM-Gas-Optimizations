@@ -634,30 +634,56 @@ contract Contract1 {
 ```
 
 
-## During `for` loops, cache array length instead of getting the length every iteration.
-Short description
+## Cached memory values before a `for` loop instead of reading the value every iteration of the loop.
+Instead of reading a memory value every iteration during a for loop, cache the value before the loop and use the cached value. This also applies to checking if `i` is < and array's length every loop. 
 
 ```js
 
 contract GasTest is DSTest {
     Contract0 c0;
     Contract1 c1;
+    Contract2 c2;
+    Contract3 c3;
 
     function setUp() public {
         c0 = new Contract0();
         c1 = new Contract1();
+        c2 = new Contract2();
+        c3 = new Contract3();
     }
 
     function testGas() public view {
-        c0.nonChachedLength();
-        c1.cachedLength();
+        uint256[] memory list = new uint256[](10);
+
+        c0.nonCachedList(list);
+        c1.cachedList(list);
+        c2.nonChachedLength(list);
+        c3.cachedLength(list);
     }
 }
 
 contract Contract0 {
-    function nonChachedLength() public pure {
-        uint256[] memory list = new uint256[](10);
+    function nonCachedList(uint256[] memory list) public pure {
+        for (uint256 i; i < list.length; i++) {
+            uint256 val0 = list[0];
+            uint256 res = 100 + val0;
+        }
+    }
+}
 
+contract Contract1 {
+    function cachedList(uint256[] memory list) public pure {
+        uint256 listLength = list.length;
+        uint256 val0 = list[0];
+
+        for (uint256 i; i < listLength; i++) {
+            uint256 res = 100 + val0;
+        }
+    }
+}
+
+contract Contract2 {
+    function nonChachedLength(uint256[] memory list) public pure {
         uint256 j = 0;
         for (uint256 i; i < list.length; i++) {
             j++;
@@ -665,11 +691,9 @@ contract Contract0 {
     }
 }
 
-contract Contract1 {
-    function cachedLength() public pure {
-        uint256[] memory list = new uint256[](10);
+contract Contract3 {
+    function cachedLength(uint256[] memory list) public pure {
         uint256 listLength = list.length;
-
         uint256 j = 0;
         for (uint256 i; i < listLength; i++) {
             j++;
@@ -686,22 +710,169 @@ contract Contract1 {
 ╞════════════════════╪═════════════════╪══════╪════════╪══════╪═════════╡
 │ Deployment Cost    ┆ Deployment Size ┆      ┆        ┆      ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ 56505              ┆ 314             ┆      ┆        ┆      ┆         │
+│ 129977             ┆ 681             ┆      ┆        ┆      ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
 │ Function Name      ┆ min             ┆ avg  ┆ median ┆ max  ┆ # calls │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ nonChachedLength   ┆ 2223            ┆ 2223 ┆ 2223   ┆ 2223 ┆ 1       │
+│ nonCachedList      ┆ 3960            ┆ 3960 ┆ 3960   ┆ 3960 ┆ 1       │
 ╰────────────────────┴─────────────────┴──────┴────────┴──────┴─────────╯
 ╭────────────────────┬─────────────────┬──────┬────────┬──────┬─────────╮
 │ Contract1 contract ┆                 ┆      ┆        ┆      ┆         │
 ╞════════════════════╪═════════════════╪══════╪════════╪══════╪═════════╡
 │ Deployment Cost    ┆ Deployment Size ┆      ┆        ┆      ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ 57105              ┆ 317             ┆      ┆        ┆      ┆         │
+│ 128977             ┆ 676             ┆      ┆        ┆      ┆         │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
 │ Function Name      ┆ min             ┆ avg  ┆ median ┆ max  ┆ # calls │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
-│ cachedLength       ┆ 2201            ┆ 2201 ┆ 2201   ┆ 2201 ┆ 1       │
+│ cachedList         ┆ 3278            ┆ 3278 ┆ 3278   ┆ 3278 ┆ 1       │
+╰────────────────────┴─────────────────┴──────┴────────┴──────┴─────────╯
+╭────────────────────┬─────────────────┬──────┬────────┬──────┬─────────╮
+│ Contract2 contract ┆                 ┆      ┆        ┆      ┆         │
+╞════════════════════╪═════════════════╪══════╪════════╪══════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 107153             ┆ 567             ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg  ┆ median ┆ max  ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ nonChachedLength   ┆ 3225            ┆ 3225 ┆ 3225   ┆ 3225 ┆ 1       │
+╰────────────────────┴─────────────────┴──────┴────────┴──────┴─────────╯
+╭────────────────────┬─────────────────┬──────┬────────┬──────┬─────────╮
+│ Contract3 contract ┆                 ┆      ┆        ┆      ┆         │
+╞════════════════════╪═════════════════╪══════╪════════╪══════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 107553             ┆ 569             ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg  ┆ median ┆ max  ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ cachedLength       ┆ 3200            ┆ 3200 ┆ 3200   ┆ 3200 ┆ 1       │
+╰────────────────────┴─────────────────┴──────┴────────┴──────┴─────────╯
+
+```
+
+
+## Cached storage values before a `for` loop instead of reading the value every iteration of the loop.
+Instead of reading a storage value every iteration during a for loop, cache the value before the loop and use the cached value. This also applies to checking if `i` is < and array's length every loop. 
+
+```js
+
+contract GasTest is DSTest {
+    Contract0 c0;
+    Contract1 c1;
+    Contract2 c2;
+    Contract3 c3;
+
+    function setUp() public {
+        c0 = new Contract0();
+        c1 = new Contract1();
+        c2 = new Contract2();
+        c3 = new Contract3();
+    }
+
+    function testGas() public {
+        c0.nonCachedList();
+        c1.cachedList();
+        c2.nonChachedLength();
+        c3.cachedLength();
+    }
+}
+
+contract Contract0 {
+    uint256[] list = new uint256[](10);
+
+    function nonCachedList() public {
+        for (uint256 i; i < list.length; i++) {
+            uint256 val0 = list[0];
+            uint256 res = 100 + val0;
+        }
+    }
+}
+
+contract Contract1 {
+    uint256[] list = new uint256[](10);
+
+    function cachedList() public {
+        uint256 listLength = list.length;
+        uint256 val0 = list[0];
+
+        for (uint256 i; i < listLength; i++) {
+            uint256 res = 100 + val0;
+        }
+    }
+}
+
+contract Contract2 {
+    uint256[] list = new uint256[](10);
+
+    function nonChachedLength() public {
+        uint256 j = 0;
+        for (uint256 i; i < list.length; i++) {
+            j++;
+        }
+    }
+}
+
+contract Contract3 {
+    uint256[] list = new uint256[](10);
+
+    function cachedLength() public {
+        uint256 listLength = list.length;
+        uint256 j = 0;
+        for (uint256 i; i < listLength; i++) {
+            j++;
+        }
+    }
+}
+
+```
+
+### Gas Report
+```js
+╭────────────────────┬─────────────────┬───────┬────────┬───────┬─────────╮
+│ Contract0 contract ┆                 ┆       ┆        ┆       ┆         │
+╞════════════════════╪═════════════════╪═══════╪════════╪═══════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆       ┆        ┆       ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 119274             ┆ 543             ┆       ┆        ┆       ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg   ┆ median ┆ max   ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ nonCachedList      ┆ 10124           ┆ 10124 ┆ 10124  ┆ 10124 ┆ 1       │
+╰────────────────────┴─────────────────┴───────┴────────┴───────┴─────────╯
+╭────────────────────┬─────────────────┬──────┬────────┬──────┬─────────╮
+│ Contract1 contract ┆                 ┆      ┆        ┆      ┆         │
+╞════════════════════╪═════════════════╪══════╪════════╪══════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 119074             ┆ 542             ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg  ┆ median ┆ max  ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ cachedList         ┆ 6359            ┆ 6359 ┆ 6359   ┆ 6359 ┆ 1       │
+╰────────────────────┴─────────────────┴──────┴────────┴──────┴─────────╯
+╭────────────────────┬─────────────────┬──────┬────────┬──────┬─────────╮
+│ Contract2 contract ┆                 ┆      ┆        ┆      ┆         │
+╞════════════════════╪═════════════════╪══════╪════════╪══════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 94262              ┆ 417             ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg  ┆ median ┆ max  ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ nonChachedLength   ┆ 5139            ┆ 5139 ┆ 5139   ┆ 5139 ┆ 1       │
+╰────────────────────┴─────────────────┴──────┴────────┴──────┴─────────╯
+╭────────────────────┬─────────────────┬──────┬────────┬──────┬─────────╮
+│ Contract3 contract ┆                 ┆      ┆        ┆      ┆         │
+╞════════════════════╪═════════════════╪══════╪════════╪══════╪═════════╡
+│ Deployment Cost    ┆ Deployment Size ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 94662              ┆ 419             ┆      ┆        ┆      ┆         │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ Function Name      ┆ min             ┆ avg  ┆ median ┆ max  ┆ # calls │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ cachedLength       ┆ 4147            ┆ 4147 ┆ 4147   ┆ 4147 ┆ 1       │
 ╰────────────────────┴─────────────────┴──────┴────────┴──────┴─────────╯
 
 ```
