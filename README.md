@@ -1130,7 +1130,9 @@ contract Contract1 {
 
 
 ## Use assembly to call an external contract
-Instead of using Solidity to call an external contract, you can assembly for gas savings. While the gas savings can be significant, it is important to thoroughly understand low level operations and the safegaurds needed when using the `call()` instruction in assembly. 
+Instead of using Solidity to call an external contract, you can assembly for significant gas savings. 
+
+Note: While the gas savings can be significant, it is important to thoroughly understand low level operations and the safegaurds needed when using the `call()` instruction in assembly. 
 
 ```js
 
