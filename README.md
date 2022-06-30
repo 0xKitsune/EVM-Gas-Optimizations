@@ -1884,7 +1884,7 @@ contract Contract3 {
 
 
 ## Instead of `if (x==bool)`, use `if(x)` or when applicable, use assembly with `iszeroiszero(x)`.
-It is redundant to check `if(x==true)` or any form of boolean comparison. You can slighly reduce gas consumption by using `if (x)` instead. When applicable, you can also use assembly to save more gas by using `iszeroiszero(x)` instead of `if (x)` and `iszero(x)` for `if (!x)`
+It is redundant to check `if(x==true)` or any form of boolean comparison. You can slightly reduce gas consumption by using `if (x)` instead. When applicable, you can also use assembly to save more gas by using `iszeroiszero(x)` instead of `if (x)` and `iszero(x)` for `if (!x)`
 
 ```js
 
