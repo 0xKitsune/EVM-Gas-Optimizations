@@ -1973,7 +1973,7 @@ contract Contract2 {
 ```
 
 
-## Use multiple `require()` statments insted of `require(expression && expression && ...)`
+## Use multiple `require()` statements instead of `require(expression && expression && ...)`
 
 ```js
 contract GasTest is DSTest {
